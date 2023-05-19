@@ -1,19 +1,13 @@
 import numpy as np
 import random
-import math
 import pygame
+import math
+import tkinter as tk
 
 NumberOfRows = 6
 NumberOfColumns = 7
-# GUI Attributes
-SQUARE_SIZE = 100
-width = NumberOfColumns * SQUARE_SIZE
-height = (NumberOfRows + 1) * SQUARE_SIZE
-size = (width, height)
-RADIUS = int(SQUARE_SIZE / 2 - 5)
-screen = pygame.display.set_mode(size)
-NumberOfRows = 6
-NumberOfColumns = 7
+COMPUTER = 0
+AGENT = 1
 EMPTY_CELL = 0
 COMPUTER_PIECE = 1
 AGENT_PIECE = 2
@@ -21,13 +15,22 @@ WINDOW_LENGTH = 4
 # Infinity Vars
 PositiveInf = 100000000000000
 MinusInf = -100000000000000
-
+Difficulty = 0
+AlgorithmChoice = 0
+MiniMaxNormal = 1
+MiniMaxAlphaBeta = 2
+# GUI Attributes
+SQUARE_SIZE = 100
+width = NumberOfColumns * SQUARE_SIZE
+height = (NumberOfRows + 1) * SQUARE_SIZE
+size = (width, height)
+RADIUS = int(SQUARE_SIZE / 2 - 5)
+screen = pygame.display.set_mode(size)
 # GUI Colours
 blue = (0, 0, 255)
 black = (0, 0, 0)
 red = (255, 0, 0)
 yellow = (255, 255, 0)
-
 
 def CreateBoard():
     board = np.zeros((NumberOfRows, NumberOfColumns))
@@ -74,7 +77,6 @@ def winMove(board, piece):
             if board[r][c] == piece and board[r - 1][c + 1] == piece \
                     and board[r - 2][c + 2] == piece and board[r - 3][c + 3] == piece:
                 return True
-    return False
 
 def evaluate_window(window, piece):
     score = 0
@@ -90,7 +92,7 @@ def evaluate_window(window, piece):
     if window.count(Turn_Piece) == 3 and window.count(EMPTY_CELL) == 1:
         score -= 4
     return score
-
+# Score Position for each player
 def ScorePos(board, piece):
     score = 0
     # Score center column
@@ -120,13 +122,6 @@ def ScorePos(board, piece):
             window = [board[r + 3 - i][c + i] for i in range(WINDOW_LENGTH)]
             score += evaluate_window(window, piece)
     return score
-
-def AllValidLocations(board):
-    valid_locations = []
-    for col in range(NumberOfColumns):
-        if ValidColumn(board, col):
-            valid_locations.append(col)
-    return valid_locations
 
 def IsLastMove(board):
     return winMove(board, COMPUTER_PIECE) or \
@@ -220,6 +215,13 @@ def MiniMaxUsingAlphaBeta(board, depth, alpha, beta, maximizingPlayer):
                 break
         return column, value
 
+def AllValidLocations(board):
+    valid_locations = []
+    for col in range(NumberOfColumns):
+        if ValidColumn(board, col):
+            valid_locations.append(col)
+    return valid_locations
+
 def DrawBoard(board):
     for c in range(NumberOfColumns):
         for r in range(NumberOfRows):
@@ -240,30 +242,233 @@ def DrawBoard(board):
                                                                          SQUARE_SIZE / 2)), RADIUS)
     pygame.display.update()
 
-board = CreateBoard()
-# board = [
-#     [0,0,0,0,0,0,0],
-#     [0,0,0,0,0,0,0],
-#     [0,2,0,0,0,0,0],
-#     [0,1,2,1,0,0,0],
-#     [0,1,2,2,0,0,0],
-#     [0,1,1,1,2,1,2]]
+def Input_Gui_Level(AlgorithmType):
+    def EasyLevelBoth():
+        global Difficulty
+        input_text = 1
+        Difficulty = int(input_text)
+        root.destroy()
 
+    def NormalLevelMiniMax():
+        global Difficulty
+        input_text = 3
+        Difficulty = int(input_text)
+        root.destroy()
 
-col = MiniMaxUsingAlphaBeta(board, 3, -math.inf, math.inf, False)
-print(IsLastMove(board))
-print(col)
-PutPiece(board,0,3,AGENT_PIECE)
-PrintBoard(board)
-DrawBoard(board)
-pygame.time.wait(3000)
+    def HardLevelMiniMax():
+        global Difficulty
+        input_text = 5
+        Difficulty = int(input_text)
+        root.destroy()
 
-# Console Output
-# False
-# (0, 3)
-# [[0. 0. 0. 0. 0. 0. 0.]
-#  [0. 0. 0. 0. 0. 0. 0.]
-#  [0. 0. 0. 0. 0. 0. 0.]
-#  [0. 0. 0. 0. 0. 0. 0.]
-#  [0. 0. 0. 0. 0. 0. 0.]
-#  [0. 0. 0. 0. 0. 0. 0.]]
+    def NormalLevelAlphaBeta():
+        global Difficulty
+        input_text = 4
+        Difficulty = int(input_text)
+        root.destroy()
+
+    def HardLevelAlphaBeta():
+        global Difficulty
+        input_text = 6
+        Difficulty = int(input_text)
+        root.destroy()
+
+    root = tk.Tk()
+    root.title("Connect-4 Game")
+    root.geometry("450x250")
+    button_font = ('Arial', 12, 'bold')
+    label = tk.Label(root, text="Select Your Level",
+                     font=button_font, padx=10, pady=10)
+    label.pack()
+    frame = tk.Frame(root)
+    frame.pack(padx=20, pady=20)
+    frame.config(bg="black")
+    root.configure(bg='black')
+    # Create the buttons and add them to the frame
+    button1 = tk.Button(frame, text='Easy', width=15, fg='black',
+                        font=button_font, command=EasyLevelBoth)
+    button1.pack(side=tk.TOP, padx=5, pady=5)
+    if AlgorithmType == 1:
+        button2 = tk.Button(frame, text='Normal', width=15, fg='blue',
+                            font=button_font, command=NormalLevelMiniMax)
+        button2.pack(side=tk.TOP, padx=5, pady=5)
+        button3 = tk.Button(frame, text='Hard', width=15, fg='red',
+                            font=button_font, command=HardLevelMiniMax)
+        button3.pack(side=tk.TOP, padx=5, pady=5)
+    else:
+        button2 = tk.Button(frame, text='Normal', width=15, fg='blue',
+                            font=button_font, command=NormalLevelAlphaBeta)
+        button2.pack(side=tk.TOP, padx=5, pady=5)
+        button3 = tk.Button(frame, text='Hard', width=15, fg='red',
+                            font=button_font, command=HardLevelAlphaBeta)
+        button3.pack(side=tk.TOP, padx=5, pady=5)
+    # Calculate the x and y positions to center the window
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x_pos = int(screen_width / 2 - 250)
+    y_pos = int(screen_height / 2 - 125)
+    # Set the geometry of the window to center it on the screen
+    root.geometry("450x250+{}+{}".format(x_pos, y_pos))
+    # Start the main event loop
+    root.mainloop()
+
+def Input_Gui_Algorithm():
+    def MiniMaxAlgorithm():
+        global MiniMaxNormal, AlgorithmChoice
+        input_text = MiniMaxNormal
+        AlgorithmChoice = int(input_text)
+        root.destroy()
+
+    def MiniMaxUsingAlphaBetaAlgorithm():
+        global MiniMaxAlphaBeta, AlgorithmChoice
+        input_text = MiniMaxAlphaBeta
+        AlgorithmChoice = int(input_text)
+        root.destroy()
+    # Create the GUI window
+    root = tk.Tk()
+    root.title("Connect-4 Game")
+    root.geometry("450x250")
+    button_font = ('Arial', 12, 'bold')
+    label = tk.Label(root, text="Select Algorithm Type",
+                     font=button_font, padx=10, pady=10)
+    label.pack()
+    frame = tk.Frame(root)
+    frame.pack(padx=20, pady=20)
+    frame.config(bg="black")
+    root.configure(bg='black')
+    # Create the buttons and add them to the frame
+    button1 = tk.Button(frame, text='Mini Max', width=20, fg='red',
+                        font=button_font, command=MiniMaxAlgorithm)
+    button1.pack(side=tk.TOP, padx=10,pady=10)
+    button2 = tk.Button(frame, text='Alpha Beta Prunning', width=20, fg='blue',
+                        font=button_font, command=MiniMaxUsingAlphaBetaAlgorithm)
+    button2.pack(side=tk.TOP, padx=10,pady=10)
+    # Calculate the x and y positions to center the window
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x_pos = int(screen_width / 2 - 250)
+    y_pos = int(screen_height / 2 - 125)
+    # Set the geometry of the window to center it on the screen
+    root.geometry("450x250+{}+{}".format(x_pos, y_pos))
+    root.mainloop()
+
+def PlayGameMiniMax():
+    board = CreateBoard()
+    PrintBoard(board)
+    game_over = False
+    Draw = True
+    pygame.init()
+    DrawBoard(board)
+    pygame.display.update()
+    pygame.display.set_caption("Connect-4 Game")
+    myfont = pygame.font.SysFont("monospace", 75)
+    turn = random.randint(COMPUTER, AGENT)
+    while not game_over:
+        # AGENT TURN
+        if turn == AGENT and not game_over:
+            col, minimax_score = MiniMax(board, Difficulty, True)
+            if ValidColumn(board, col):
+                pygame.time.wait(200)
+                row = Next_Available_Row(board, col)
+                PutPiece(board, row, col, AGENT_PIECE)
+                if winMove(board, AGENT_PIECE):
+                    label = myfont.render("Agent wins!!", 1, yellow)
+                    print("Agent wins!!\n")
+                    screen.blit(label, (40, 10))
+                    game_over = True
+                    Draw = False
+                turn = 0
+                PrintBoard(board)
+                DrawBoard(board)
+        # COMPUTER TRUN
+        elif turn == COMPUTER and not game_over:
+            col, minimax_score = MiniMax(board, Difficulty, True)
+            if ValidColumn(board, col):
+                pygame.time.wait(200)
+                row = Next_Available_Row(board, col)
+                PutPiece(board, row, col, COMPUTER_PIECE)
+                if winMove(board, COMPUTER_PIECE):
+                    label = myfont.render("Computer wins!!", 1, red)
+                    print("Computer wins!!\n")
+                    screen.blit(label, (40, 10))
+                    game_over = True
+                    Draw = False
+                turn = 1
+                PrintBoard(board)
+                DrawBoard(board)
+        # Check if the game is over close the screen after 3 seconds
+        if game_over and not Draw:
+            pygame.time.wait(3000)
+
+def PlayGameAlphaBetaPrunning():
+    board = CreateBoard()
+    PrintBoard(board)
+    game_over = False
+    Draw = True
+    pygame.init()
+    DrawBoard(board)
+    pygame.display.update()
+    pygame.display.set_caption("Connect-4 Game")
+    myfont = pygame.font.SysFont("monospace", 75)
+    turn = random.randint(COMPUTER, AGENT)
+    while not game_over:
+        # AGENT TURN
+        if turn == AGENT and not game_over:
+            col, minimax_score = MiniMaxUsingAlphaBeta(board, Difficulty,
+                                                       -math.inf, math.inf, True)
+            if ValidColumn(board, col):
+                pygame.time.wait(200)
+                row = Next_Available_Row(board, col)
+                PutPiece(board, row, col, AGENT_PIECE)
+                if winMove(board, AGENT_PIECE):
+                    label = myfont.render("Agent wins!!", 1, yellow)
+                    print("Agent wins!!\n")
+                    screen.blit(label, (40, 10))
+                    game_over = True
+                    Draw = False
+                turn = 0
+                PrintBoard(board)
+                DrawBoard(board)
+        # COMPUTER TRUN
+        elif turn == COMPUTER and not game_over:
+            col, minimax_score = MiniMaxUsingAlphaBeta(board, Difficulty,
+                                                       -math.inf, math.inf, True)
+            if ValidColumn(board, col):
+                pygame.time.wait(200)
+                row = Next_Available_Row(board, col)
+                PutPiece(board, row, col, COMPUTER_PIECE)
+                if winMove(board, COMPUTER_PIECE):
+                    label = myfont.render("Computer wins!!", 1, red)
+                    print("Computer wins!!\n")
+                    screen.blit(label, (40, 10))
+                    game_over = True
+                    Draw = False
+                turn = 1
+                PrintBoard(board)
+                DrawBoard(board)
+        # Check if the game is over close the screen after 3 seconds
+        if game_over and not Draw:
+            pygame.time.wait(6000)
+
+def PrintConsole(diff, algorithmChoice):
+    if diff == 1:
+        print("Difficulty : Easy")
+    elif diff == 2:
+        print("Difficulty : Normal")
+    elif diff == 3:
+        print("Difficulty : Hard")
+    if algorithmChoice == 1:
+        print("AlgorithmChoice : MiniMax Algorithm")
+    elif algorithmChoice == 2:
+        print("AlgorithmChoice : MiniMax Alpha Beta")
+
+#  ------------------------- Main -------------------------
+PrintConsole(Difficulty, AlgorithmChoice)
+Input_Gui_Algorithm()
+Input_Gui_Level(AlgorithmChoice)
+# Play The Game by MiniMax Algorithm
+if AlgorithmChoice == 1:
+    PlayGameMiniMax()
+# Play The Game by MiniMax Algorithm Refined by Alpha Beta Prunning Algorithm
+elif AlgorithmChoice == 2:
+    PlayGameAlphaBetaPrunning()
