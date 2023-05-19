@@ -1,4 +1,6 @@
 import numpy as np
+import random
+import math
 
 NumberOfRows = 6
 NumberOfColumns = 7
@@ -6,6 +8,9 @@ EMPTY_CELL = 0
 COMPUTER_PIECE = 1
 AGENT_PIECE = 2
 WINDOW_LENGTH = 4
+# Infinity Vars
+PositiveInf = 100000000000000
+MinusInf = -100000000000000
 
 def CreateBoard():
     board = np.zeros((NumberOfRows, NumberOfColumns))
@@ -99,6 +104,62 @@ def ScorePos(board, piece):
             score += evaluate_window(window, piece)
     return score
 
+def AllValidLocations(board):
+    valid_locations = []
+    for col in range(NumberOfColumns):
+        if ValidColumn(board, col):
+            valid_locations.append(col)
+    return valid_locations
+
+
+def IsLastMove(board):
+    return winMove(board, COMPUTER_PIECE) or \
+        winMove(board, AGENT_PIECE) or len(AllValidLocations(board)) == 0
+
+#   Normal MiniMax Algorithm
+def MiniMax(board, depth, maximizingPlayer):
+    valid_locations = AllValidLocations(board)
+    LastMove = IsLastMove(board)
+    if depth == 0 or LastMove:
+        if LastMove:
+            if winMove(board, AGENT_PIECE):
+                return None, PositiveInf
+            elif winMove(board, COMPUTER_PIECE):
+                return None, MinusInf
+            else:  # Game is over, no more valid moves
+                return None, 0
+        else:  # Depth is zero
+            return None, ScorePos(board, AGENT_PIECE)
+    if maximizingPlayer:
+        value = -math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = Next_Available_Row(board, col)
+            if row is None:
+                continue
+            board_copy = board.copy()
+            PutPiece(board_copy, row, col, AGENT_PIECE)
+            new_score = MiniMax(board_copy, depth - 1, False)[1]
+            if new_score > value:
+                value = new_score
+                column = col
+        return column, value
+    else:  # Minimizing player
+        value = math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = Next_Available_Row(board, col)
+            if row is None:
+                continue
+            board_copy = board.copy()
+            PutPiece(board_copy, row, col, COMPUTER_PIECE)
+            new_score = MiniMax(board_copy, depth - 1, True)[1]
+            if new_score < value:
+                value = new_score
+                column = col
+        return column, value
+
+
 board = CreateBoard()
 board = [
     [0,0,0,0,0,0,0],
@@ -108,6 +169,7 @@ board = [
     [0,1,2,2,0,0,0],
     [0,1,1,1,2,1,2]]
 
-print(ScorePos(board,AGENT_PIECE))
-print(winMove(board, AGENT_PIECE))
-PrintBoard(board)
+col = MiniMax(board, 2, True)
+print(IsLastMove(board))
+print(col)
+print(board)
