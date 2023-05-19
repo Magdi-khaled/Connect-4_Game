@@ -1,7 +1,17 @@
 import numpy as np
 import random
 import math
+import pygame
 
+NumberOfRows = 6
+NumberOfColumns = 7
+# GUI Attributes
+SQUARE_SIZE = 100
+width = NumberOfColumns * SQUARE_SIZE
+height = (NumberOfRows + 1) * SQUARE_SIZE
+size = (width, height)
+RADIUS = int(SQUARE_SIZE / 2 - 5)
+screen = pygame.display.set_mode(size)
 NumberOfRows = 6
 NumberOfColumns = 7
 EMPTY_CELL = 0
@@ -11,6 +21,13 @@ WINDOW_LENGTH = 4
 # Infinity Vars
 PositiveInf = 100000000000000
 MinusInf = -100000000000000
+
+# GUI Colours
+blue = (0, 0, 255)
+black = (0, 0, 0)
+red = (255, 0, 0)
+yellow = (255, 255, 0)
+
 
 def CreateBoard():
     board = np.zeros((NumberOfRows, NumberOfColumns))
@@ -111,7 +128,6 @@ def AllValidLocations(board):
             valid_locations.append(col)
     return valid_locations
 
-
 def IsLastMove(board):
     return winMove(board, COMPUTER_PIECE) or \
         winMove(board, AGENT_PIECE) or len(AllValidLocations(board)) == 0
@@ -159,17 +175,95 @@ def MiniMax(board, depth, maximizingPlayer):
                 column = col
         return column, value
 
+#   MiniMax Algorithm Using Alpha Beta
+def MiniMaxUsingAlphaBeta(board, depth, alpha, beta, maximizingPlayer):
+    valid_locations = AllValidLocations(board)
+    LastMove = IsLastMove(board)
+    if depth == 0 or LastMove:
+        if LastMove:
+            if winMove(board, AGENT_PIECE):
+                return None, PositiveInf
+            elif winMove(board, COMPUTER_PIECE):
+                return None, MinusInf
+            else:  # Game is over, no more valid moves
+                return None, 0
+        else:  # Depth is zero
+            return None, ScorePos(board, AGENT_PIECE)
+    if maximizingPlayer:
+        value = -math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = Next_Available_Row(board, col)
+            b_copy = board.copy()
+            PutPiece(b_copy, row, col, AGENT_PIECE)
+            new_score = MiniMaxUsingAlphaBeta(b_copy, depth - 1, alpha, beta, False)[1]
+            if new_score > value:
+                value = new_score
+                column = col
+            alpha = max(alpha, value)
+            if alpha >= beta:
+                break
+        return column, value
+    else:  # Minimizing player
+        value = math.inf
+        column = random.choice(valid_locations)
+        for col in valid_locations:
+            row = Next_Available_Row(board, col)
+            b_copy = board.copy()
+            PutPiece(b_copy, row, col, COMPUTER_PIECE)
+            new_score = MiniMaxUsingAlphaBeta(b_copy, depth - 1, alpha, beta, True)[1]
+            if new_score < value:
+                value = new_score
+                column = col
+            beta = min(beta, value)
+            if alpha >= beta:
+                break
+        return column, value
+
+def DrawBoard(board):
+    for c in range(NumberOfColumns):
+        for r in range(NumberOfRows):
+            pygame.draw.rect(screen, yellow, (c * SQUARE_SIZE, r * SQUARE_SIZE +
+                                              SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+            pygame.draw.circle(screen, black, (
+                int(c * SQUARE_SIZE + SQUARE_SIZE / 2), int(r * SQUARE_SIZE + SQUARE_SIZE +
+                                                            SQUARE_SIZE / 2)), RADIUS)
+    for c in range(NumberOfColumns):
+        for r in range(NumberOfRows):
+            if board[r][c] == COMPUTER_PIECE:
+                pygame.draw.circle(screen, red, (
+                    int(c * SQUARE_SIZE + SQUARE_SIZE / 2), height - int(r * SQUARE_SIZE +
+                                                                         SQUARE_SIZE / 2)), RADIUS)
+            elif board[r][c] == AGENT_PIECE:
+                pygame.draw.circle(screen, blue, (
+                    int(c * SQUARE_SIZE + SQUARE_SIZE / 2), height - int(r * SQUARE_SIZE +
+                                                                         SQUARE_SIZE / 2)), RADIUS)
+    pygame.display.update()
 
 board = CreateBoard()
-board = [
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0],
-    [0,2,0,0,0,0,0],
-    [0,1,2,1,0,0,0],
-    [0,1,2,2,0,0,0],
-    [0,1,1,1,2,1,2]]
+# board = [
+#     [0,0,0,0,0,0,0],
+#     [0,0,0,0,0,0,0],
+#     [0,2,0,0,0,0,0],
+#     [0,1,2,1,0,0,0],
+#     [0,1,2,2,0,0,0],
+#     [0,1,1,1,2,1,2]]
 
-col = MiniMax(board, 2, True)
+
+col = MiniMaxUsingAlphaBeta(board, 3, -math.inf, math.inf, False)
 print(IsLastMove(board))
 print(col)
-print(board)
+PutPiece(board,0,3,AGENT_PIECE)
+PrintBoard(board)
+DrawBoard(board)
+pygame.time.wait(3000)
+
+# Console Output
+# False
+# (0, 3)
+# [[0. 0. 0. 0. 0. 0. 0.]
+#  [0. 0. 0. 0. 0. 0. 0.]
+#  [0. 0. 0. 0. 0. 0. 0.]
+#  [0. 0. 0. 0. 0. 0. 0.]
+#  [0. 0. 0. 0. 0. 0. 0.]
+#  [0. 0. 0. 0. 0. 0. 0.]]
