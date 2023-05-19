@@ -5,6 +5,7 @@ import math
 import tkinter as tk
 
 NumberOfRows = 6
+Exit1 = 0
 NumberOfColumns = 7
 COMPUTER = 0
 AGENT = 1
@@ -91,6 +92,7 @@ def evaluate_window(window, piece):
     if window.count(Turn_Piece) == 3 and window.count(EMPTY_CELL) == 1:
         score -= 4
     return score
+
 # Score Position for each player
 def ScorePos(board, piece):
     score = 0
@@ -242,6 +244,7 @@ def DrawBoard(board):
     pygame.display.update()
 
 def Input_Gui_Level(AlgorithmType):
+
     def EasyLevelBoth():
         global Difficulty
         input_text = 1
@@ -275,6 +278,9 @@ def Input_Gui_Level(AlgorithmType):
     root = tk.Tk()
     root.title("Connect-4 Game")
     root.geometry("450x250")
+    if Exit1:
+        root.destroy()
+        return 0
     button_font = ('Arial', 12, 'bold')
     label = tk.Label(root, text="Select Your Level",
                      font=button_font, padx=10, pady=10)
@@ -323,6 +329,11 @@ def Input_Gui_Algorithm():
         input_text = MiniMaxAlphaBeta
         AlgorithmChoice = int(input_text)
         root.destroy()
+
+    def Exit():
+        global Exit1
+        Exit1 = 1
+        root.destroy()
     # Create the GUI window
     root = tk.Tk()
     root.title("Connect-4 Game")
@@ -342,6 +353,9 @@ def Input_Gui_Algorithm():
     button2 = tk.Button(frame, text='Alpha Beta Prunning', width=20, fg='blue',
                         font=button_font, command=MiniMaxUsingAlphaBetaAlgorithm)
     button2.pack(side=tk.TOP, padx=10,pady=10)
+    button2 = tk.Button(frame, text='Exit', width=20, fg='black',
+                        font=button_font, command=Exit)
+    button2.pack(side=tk.TOP, padx=10, pady=10)
     # Calculate the x and y positions to center the window
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -352,6 +366,9 @@ def Input_Gui_Algorithm():
     root.mainloop()
 
 def PlayGameMiniMax():
+    if Exit1:
+        pygame.quit()
+        return 0
     board = CreateBoard()
     PrintBoard(board)
     game_over = False
@@ -371,7 +388,7 @@ def PlayGameMiniMax():
                 row = Next_Available_Row(board, col)
                 PutPiece(board, row, col, AGENT_PIECE)
                 if winMove(board, AGENT_PIECE):
-                    label = myfont.render("Agent wins!!", 1, yellow)
+                    label = myfont.render("Agent wins!!", 1, blue)
                     print("Agent wins!!\n")
                     screen.blit(label, (40, 10))
                     game_over = True
@@ -396,21 +413,31 @@ def PlayGameMiniMax():
                 PrintBoard(board)
                 DrawBoard(board)
         # Check if the game is over close the screen after 3 seconds
-        if game_over and not Draw:
-            pygame.time.wait(3000)
+        elif turn == COMPUTER or turn == AGENT and Draw:
+            label = myfont.render("Draw :)", 1, red)
+            print("Draw :(\n")
+            screen.blit(label, (40, 10))
+        # if game_over and not Draw:
+        #     pygame.time.wait(3000)
 
-def PlayGameAlphaBetaPrunning():
+def PlayGameAlphaBetaPruning():
+    if Exit1:
+        pygame.quit()
+        return 0
     board = CreateBoard()
     PrintBoard(board)
     game_over = False
     Draw = True
+    ResetGame = True
     pygame.init()
     DrawBoard(board)
     pygame.display.update()
     pygame.display.set_caption("Connect-4 Game")
     myfont = pygame.font.SysFont("monospace", 75)
     turn = random.randint(COMPUTER, AGENT)
+    # while ResetGame:
     while not game_over:
+        running = True
         # AGENT TURN
         if turn == AGENT and not game_over:
             col, minimax_score = MiniMaxUsingAlphaBeta(board, Difficulty,
@@ -447,7 +474,7 @@ def PlayGameAlphaBetaPrunning():
                 DrawBoard(board)
         # Check if the game is over close the screen after 3 seconds
         if game_over and not Draw:
-            pygame.time.wait(6000)
+            pygame.time.wait(2000)
 
 def PrintConsole(diff, algorithmChoice):
     if diff == 1:
@@ -462,13 +489,16 @@ def PrintConsole(diff, algorithmChoice):
         print("AlgorithmChoice : MiniMax Alpha Beta")
 
 #  ------------------------- Main -------------------------
-PrintConsole(Difficulty, AlgorithmChoice)
-Input_Gui_Algorithm()
-Input_Gui_Level(AlgorithmChoice)
-screen = pygame.display.set_mode(size)
-# Play The Game by MiniMax Algorithm
-if AlgorithmChoice == 1:
-    PlayGameMiniMax()
-# Play The Game by MiniMax Algorithm Refined by Alpha Beta Prunning Algorithm
-elif AlgorithmChoice == 2:
-    PlayGameAlphaBetaPrunning()
+while not Exit1:
+    if Exit1:
+        break
+    PrintConsole(Difficulty, AlgorithmChoice)
+    Input_Gui_Algorithm()
+    Input_Gui_Level(AlgorithmChoice)
+    screen = pygame.display.set_mode(size)
+    # Play The Game by MiniMax Algorithm
+    if AlgorithmChoice == 1:
+        PlayGameMiniMax()
+    # Play The Game by MiniMax Algorithm Refined by Alpha Beta Prunning Algorithm
+    elif AlgorithmChoice == 2:
+        PlayGameAlphaBetaPruning()
