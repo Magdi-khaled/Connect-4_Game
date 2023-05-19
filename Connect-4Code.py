@@ -25,7 +25,6 @@ width = NumberOfColumns * SQUARE_SIZE
 height = (NumberOfRows + 1) * SQUARE_SIZE
 size = (width, height)
 RADIUS = int(SQUARE_SIZE / 2 - 5)
-screen = pygame.display.set_mode(size)
 # GUI Colours
 blue = (0, 0, 255)
 black = (0, 0, 0)
@@ -466,6 +465,7 @@ def PrintConsole(diff, algorithmChoice):
 PrintConsole(Difficulty, AlgorithmChoice)
 Input_Gui_Algorithm()
 Input_Gui_Level(AlgorithmChoice)
+screen = pygame.display.set_mode(size)
 # Play The Game by MiniMax Algorithm
 if AlgorithmChoice == 1:
     PlayGameMiniMax()
